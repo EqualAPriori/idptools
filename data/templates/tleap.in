@@ -1,0 +1,18 @@
+#source leaprc.ff03
+source leaprc.ff99SB
+#source leaprc.water.opc
+source leaprc.water.tip3p
+
+test = sequence { ACE ASN LEU SER NME }
+saveoff test test.lib
+savepdb test test.pdb
+saveamberparm test test.prmtop test.rst7
+
+#solvateBox test TIP3PBOX 10.0 1.0
+#SaveAmberParm test test_solvated.prmtop test_solvated.inpcrd
+
+#mol = sequence {NALA ALA ALA ALA ALA ALA ALA CALA}
+#saveamberparm mol mol.prmtop mol.inpcrd
+#savepdb mol mol.pdb
+
+quit
