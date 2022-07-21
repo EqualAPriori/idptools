@@ -62,7 +62,7 @@ def setup(sequence=None,settings=None):
     script += "\n"
     script += "\n{0} = sequence {{ {1} }}".format(molname,writeseq)
     script += "\nsaveoff {0} {0}.lib".format(molname)
-    script += "\nsavepdb {0} {0}.lib".format(molname)
+    script += "\nsavepdb {0} {0}.pdb".format(molname)
     script += "\nsaveamberparm {0} {0}.prmtop {0}.rst7".format(molname)
 
     script += "\n\nquit"
@@ -75,9 +75,13 @@ def setup(sequence=None,settings=None):
 def run():
     os.system("tleap -f tleap.in")
 
-def minimize():
-    pass
+def minimize(name):
+    """
+    name: prefix of topology and forcefield files
+    """
+    os.system("sander -O -i {0}/min1.in -o min1.out -p {1}.prmtop -c {1}.rst7 -r min1.ncrst".format(templatedir,name))
 
+    os.system("ambpdb -p {}.prmtop -c min1.ncrst > min1.pdb".format(name))
 
 # ===== VALIDATION
 def validate_ff(ff):
@@ -99,6 +103,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser("set up tleap for single chain")
     parser.add_argument("-r",action="store_true",help="run tleapflag")
+    parser.add_argument("-m",action="store_true",help="run sander minimization")
     parser.add_argument("-s",default="settings.json",help="settings file")
     parser.add_argument("-q",default=None,type=str,help="sequence")
     parser.add_argument("-n",default=None,type=str,help="name")
@@ -113,6 +118,7 @@ if __name__ == "__main__":
     else:
         print("settings file {} doesn't exist, loading from template".format(args.s))
         settings = log.json_load(templatedir+"tleap_defaults.json")
+        log.json_write(args.s,settings)
 
     if args.n is not None:
         settings["name"] = args.n
@@ -124,4 +130,6 @@ if __name__ == "__main__":
     setup(sequence, settings)
     if args.r:
         run()
+    if args.m:
+        minimize(settings["name"])
 
