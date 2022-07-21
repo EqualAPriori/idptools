@@ -105,4 +105,7 @@ def expand(seq):
     return expanded
 
 
+if __name__ == "__main__":
+    import argparse
+    parser = ArgumentParser("amino acid parsing helpers")
 

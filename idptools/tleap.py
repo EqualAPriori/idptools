@@ -1,8 +1,13 @@
+# Wrapper for AmberTools
+# See tutorials:
+#   https://ambermd.org/tutorials/basic/tutorial7/index.php
+#   https://ambermd.org/tutorials/basic/tutorial3/section1.htm
+#
 import os
 
 import utility.log as log
-import config
-import aa
+from . import config
+from . import aa
 
 templatedir = config.datadir + "/templates/"
 
@@ -100,6 +105,9 @@ def validate_water(ff):
 
 # ===== MAIN
 if __name__ == "__main__":
+    cmdln()
+
+def cmdln():
     import argparse
     parser = argparse.ArgumentParser("set up tleap for single chain")
     parser.add_argument("-r",action="store_true",help="run tleapflag")
@@ -111,7 +119,6 @@ if __name__ == "__main__":
     parser.add_argument("-w",default=None,type=str,help="w")
     args = parser.parse_args()
     sequence = args.q
-
 
     if os.path.exists(args.s):
         settings = log.json_load(args.s)
