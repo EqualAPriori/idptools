@@ -1,6 +1,6 @@
 Stage 1 - minimisation of peptide
  &cntrl
   imin=1, maxcyc=1000, ncyc=500,
-  cut=999., rgbmax=999.,igb=1, ntb=0,
-  ntpr=100
+  cut=999., rgbmax=999.,igb=8, ntb=0,
+  ntpr=100, saltcon = 0.1 
  /
