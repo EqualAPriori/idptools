@@ -36,7 +36,10 @@ def setup(sequence=None,settings=None):
         raise ValueError("missing water specification")
     else:
         water = validate_water(settings["water"])
-        script += "\nsource leaprc.water.{}".format(water)
+        if water.startswith("mbond"):
+            script += "\nset default PBRadii {}".format(water)
+        else:
+            script += "\nsource leaprc.water.{}".format(water)
 
     # parse sequence
     if sequence is None:
@@ -69,6 +72,7 @@ def setup(sequence=None,settings=None):
     script += "\nsaveoff {0} {0}.lib".format(molname)
     script += "\nsavepdb {0} {0}.pdb".format(molname)
     script += "\nsaveamberparm {0} {0}.prmtop {0}.rst7".format(molname)
+    script += "\nsaveamberparm {0} {0}.parm7 {0}.rst7".format(molname)
 
     script += "\n\nquit"
 
@@ -92,13 +96,22 @@ def minimize(name):
 def validate_ff(ff):
     if ff.lower() in ["99sb","f99sb","ff99sb"]:
         return "ff99SB"
+    elif ff.lower() in ["protein.ff14sbonlysc","ff14sbonlysc"]:
+        return "protein.ff14SBonlysc"
+    elif ff.lower().startswith("ff"):
+        return "ff"+ff[2:].upper()
     else:
-        raise ValueError("Unknown ff setting {}".format(ff))
+        print("Unknown ff setting {}, using as is".format(ff))
+        return ff
 def validate_water(ff):
     if ff.lower() in ["tip3p"]:
         return "tip3p"
     elif ff.lower() in ["opc"]:
         return "opc"
+    elif ff.lower().startswith("igb"):
+        igb = int(ff[3]) #the igb number, see https://github.com/openmm/openmm/issues/3708#issuecomment-1192126842 
+        igb_pdbradii_dict = {1:"mbondi",2:"mbondi2",5:"mbondi2",7:"mbondi",8:"mbondi3"}
+        return igb_pdbradii_dict[igb]
     else:
         print("Unknown water ff {}, using as is".format(ff))
         return ff
@@ -107,7 +120,12 @@ def validate_water(ff):
 if __name__ == "__main__":
     cmdln()
 
-def cmdln():
+def cmdln(unknown=None):
+    """
+    Note:
+        after installing, call this script via "pyleap"
+        -q "<AAVPGXG" -ff ff99SB -w tip3p -n myPeptide -r -m
+    """
     import argparse
     parser = argparse.ArgumentParser("set up tleap for single chain")
     parser.add_argument("-r",action="store_true",help="run tleapflag")
@@ -117,7 +135,10 @@ def cmdln():
     parser.add_argument("-n",default=None,type=str,help="name")
     parser.add_argument("-ff",default=None,type=str,help="ff")
     parser.add_argument("-w",default=None,type=str,help="w")
-    args = parser.parse_args()
+    if unknown is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(unknown)
     sequence = args.q
 
     if os.path.exists(args.s):
