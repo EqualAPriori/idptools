@@ -102,6 +102,8 @@ def md_simple(cmdln_args=None):
         md_settings["cutoff"] = cutoff
     if args.init is not None:
         md_settings["init"] = args.init
+    if args.device is not None:
+        md_settings["device"] = args.device
     if args.dispcorr is not None:
         md_settings["dispcorr"] = args.dispcorr
     print(md_settings)

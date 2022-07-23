@@ -27,7 +27,7 @@ parser.add_argument("-salt",default=0.1,type=float,help="salt conc (M)")
 parser.add_argument("-cutoff",default=1.0,type=float,help="cutoff (nm)")
 parser.add_argument("-init",default=None,help="pdb file for initial coordinates")
 parser.add_argument("-device",default=0,type=int,help="device")
-parser.add_argument("-dt",default=2.0,type=float,help="device")
+parser.add_argument("-dt",default=2.0,type=float,help="dt")
 parser.add_argument("-dispcorr",action="store_true",help="turn on dispersion correction")
 args = parser.parse_args()
 
@@ -77,6 +77,7 @@ integrator = mm.LangevinIntegrator(
 # Define the platform to use; CUDA, OpenCL, CPU, or Reference. Or do not specify
 # the platform to use the default (fastest) platform
 platform = mm.Platform.getPlatformByName('CUDA')
+print("device: {}".format(args.device))
 prop = dict(CudaPrecision='mixed',CudaDeviceIndex=str(args.device)) # Use mixed single/double precision
 
 # Dispersion correction
