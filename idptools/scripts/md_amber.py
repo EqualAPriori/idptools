@@ -1,5 +1,5 @@
 # simple MD script
-# this one both solvates AND runs the explicit solvent simulation
+# this works for both implicit AND explicit solvent simulation
 
 from __future__ import division, print_function
 

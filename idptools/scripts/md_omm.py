@@ -1,5 +1,5 @@
 # simple MD script
-# this one both solvates AND runs the explicit solvent simulation
+# this works for both implicit AND explicit solvent simulation
 # TODO:
 #   need to add in settings.json parsing, i.e. to read out what .xml forcefield to use
 #   potentially, write a settings parser, or a wrap this script in a function...
