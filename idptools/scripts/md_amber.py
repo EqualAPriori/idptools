@@ -63,7 +63,8 @@ if args.p > 0.0:
     if args.solv is not None:
         raise ValueError("... barostat can not be used with implicit solvent")
     barostat_freq = 25
-    barostat = mm.MonteCarloBarostat(args.p * u.bar, args.T * u.kelvin, barostat_freq)
+    #barostat = mm.MonteCarloBarostat(args.p * u.bar, args.T * u.kelvin, barostat_freq)
+    barostat = mm.MonteCarloAnisotropicBarostat(mm.vec3.Vec3(args.p*u.bar, args.p*u.bar, args.p*u.bar), args.T*u.kelvin, True, True, True, barostat_freq)
     system.addForce(barostat)
 
 # Create the integrator to do Langevin dynamics
