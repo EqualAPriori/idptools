@@ -3,7 +3,7 @@
 # requires each module to expose their own customized handling of commandline arguments
 # another potential paradigm is to have each module have their own dispatchers.
 #
-import os, sys, argparse
+import os, sys, argparse, distutils
 import utility.log as log
 from . import config
 from . import aa
@@ -65,6 +65,7 @@ def md_simple(cmdln_args=None):
     parser.add_argument("-init",default=None,help="initial structure (pdb)")
     parser.add_argument("-device",type=int,default=0,help="GPU device")
     parser.add_argument("-style",type=str,default="amber",choices=["amber","omm","gromacs"],help="GPU device")
+    parser.add_argument("-dispcorr",default=None,type=lambda x:bool(distutils.util.strtobool(x)),help="toggle on dispersion correction")
     if cmdln_args is None:
         args = parser.parse_args()
     else:
@@ -79,7 +80,8 @@ def md_simple(cmdln_args=None):
                             "T":298.15, 
                             "p":None,
                             "salt":None, 
-                            "device":0, 
+                            "device":0,
+                            "dispcorr":False,
                             "cutoff":None,
                             "init":None}
     else:
@@ -100,6 +102,8 @@ def md_simple(cmdln_args=None):
         md_settings["cutoff"] = cutoff
     if args.init is not None:
         md_settings["init"] = args.init
+    if args.dispcorr is not None:
+        md_settings["dispcorr"] = args.dispcorr
     print(md_settings)
    
     #running -- potentially have the *simulation script* document this section...
@@ -122,6 +126,8 @@ def md_simple(cmdln_args=None):
         cmd += " -cutoff {}".format(md_settings["cutoff"])
     if md_settings["init"] not in [None]:
         cmd += " -init {}".format(md_settings["init"])
+    if md_settings["dispcorr"]:
+        cmd += " -dispcorr"
     cmd += " -device {}".format(md_settings["device"])
 
     print("executing: {}".format(cmd))

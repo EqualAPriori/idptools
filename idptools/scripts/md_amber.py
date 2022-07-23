@@ -28,6 +28,7 @@ parser.add_argument("-cutoff",default=1.0,type=float,help="cutoff (nm)")
 parser.add_argument("-init",default=None,help="pdb file for initial coordinates")
 parser.add_argument("-device",default=0,type=int,help="device")
 parser.add_argument("-dt",default=2.0,type=float,help="device")
+parser.add_argument("-dispcorr",action="store_true",help="turn on dispersion correction")
 args = parser.parse_args()
 
 impSolvDict = {None:None, 0:None, 1:app.HCT, 2:app.OBC1, 5:app.OBC2, 7:app.GBn, 8:app.GBn2}
@@ -58,7 +59,7 @@ else:
 
 # Add Barostat if applicable
 if args.p > 0.0:
-    print("... adding barostat")
+    print("... adding barostat ({} bar)".format(args.p))
     if args.solv is not None:
         raise ValueError("... barostat can not be used with implicit solvent")
     barostat_freq = 25
@@ -76,6 +77,13 @@ integrator = mm.LangevinIntegrator(
 # the platform to use the default (fastest) platform
 platform = mm.Platform.getPlatformByName('CUDA')
 prop = dict(CudaPrecision='mixed',CudaDeviceIndex=str(args.device)) # Use mixed single/double precision
+
+# Dispersion correction
+for i in system.getForces():
+    if isinstance(i, mm.NonbondedForce):
+        print("... Default dispersionCorrection: {}".format(i.getUseDispersionCorrection())) #Note OpenMM Default is Yes Dispersion Correction!
+        i.setUseDispersionCorrection(args.dispcorr)
+        print("... New dispersionCorrection: {}".format(i.getUseDispersionCorrection()))
 
 # Create the Simulation object
 sim = app.Simulation(amber_def.topology, system, integrator, platform, prop)
@@ -107,24 +115,24 @@ logfile = "thermo.log"
 if args.solv is not None: #implicit solvent
     sim.reporters.append(
             app.StateDataReporter(logfile, int(args.stride/10)*steps_per_ps, step=True, potentialEnergy=True,
-                                   kineticEnergy=True, temperature=True,
+                                   kineticEnergy=True, temperature=True, volume=True,
                                    speed=True, time=True)
     )
     sim.reporters.append(
             app.StateDataReporter(sys.stdout, int(args.stride/10)*steps_per_ps, step=True, potentialEnergy=True,
-                                   kineticEnergy=True, temperature=True, 
+                                   kineticEnergy=True, temperature=True, volume=True,
                                    speed=True, time=True,
                                    remainingTime=True, progress=True, totalSteps=totalSteps)
     )
 else: #probably explicit solvent
     sim.reporters.append(
             app.StateDataReporter(logfile, int(args.stride/10)*steps_per_ps, step=True, potentialEnergy=True,
-                                   kineticEnergy=True, temperature=True, density=True, 
+                                   kineticEnergy=True, temperature=True, density=True, volume=True,
                                    speed=True, time=True)
     )
     sim.reporters.append(
             app.StateDataReporter(sys.stdout, int(args.stride/10)*steps_per_ps, step=True, potentialEnergy=True,
-                                   kineticEnergy=True, temperature=True, density=True, 
+                                   kineticEnergy=True, temperature=True, density=True, volume=True,
                                    speed=True, time=True,
                                    remainingTime=True, progress=True, totalSteps=totalSteps)
     )
