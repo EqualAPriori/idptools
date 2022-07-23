@@ -1,4 +1,6 @@
 # simple MD script
+# this one both solvates AND runs the explicit solvent simulation
+
 from __future__ import division, print_function
 
 import sys
@@ -9,7 +11,7 @@ import openmm.app as app
 
 # ParmEd Imports
 from parmed import load_file, unit as u
-from parmed.openmm import StateDataReporter, NetCDFReporter
+#from parmed.openmm import StateDataReporter, NetCDFReporter
 import mdtraj
 
 # Other imports
@@ -70,10 +72,15 @@ else:
 print('Minimizing energy')
 sim.minimizeEnergy(maxIterations=500)
 
+
+# ===== Reporters and Run =====
+totalSteps = steps_per_ps * args.ps
+
 # Set up the reporters to report energies and coordinates every 100 steps
 sim.reporters.append(
-        StateDataReporter(sys.stdout, steps_per_ps, step=True, potentialEnergy=True,
-                               kineticEnergy=True, temperature=True)
+        app.StateDataReporter(sys.stdout, int(args.stride/10)*steps_per_ps, step=True, potentialEnergy=True,
+                                kineticEnergy=True, temperature=True, speed=True, time=True,
+                                progress=True, remainingTime=True, totalSteps=totalSteps)
 )
 sim.reporters.append(
         #NetCDFReporter(f'{args.prefix}.nc', 1000, crds=True) # CHANGE TO USE NETCDF
@@ -85,7 +92,7 @@ positions = sim.context.getState(getPositions=True).getPositions()
 app.PDBFile.writeFile(sim.topology, positions, open("init.pdb", 'w'))
 
 print('Running dynamics')
-sim.step(steps_per_ps*args.ps)
+sim.step(totalSteps)
 
 positions = sim.context.getState(getPositions=True).getPositions()
 app.PDBFile.writeFile(sim.topology, positions, open("final.pdb", 'w'))

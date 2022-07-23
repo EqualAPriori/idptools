@@ -16,8 +16,8 @@ def dispatch():
 
     if args.cmd == "pyleap":
         tleap.cmdln(unknown)
-    elif args.cmd == "implicit_relax":
-        implicit_relax(unknown)
+    elif args.cmd == "md_simple":
+        md_simple(unknown)
     elif args.cmd == "ELP_homo":
         ELP_homo(unknown)
     else:
@@ -53,47 +53,81 @@ def ELP_homo(cmdln_args):
 
 # -----> simple implicit solvent relaxation on whatever system is in settings.json
 #python ~/lib/idp/idptools/scripts/md_implicit.py test -ps 1000 -stride 100 -solv 5 > z.out &
-#implicit_relax(ps=None,stride=None,T=None,salt=None,**kwargs):
-def implicit_relax(cmdln_args=None):
+#md_simple(ps=None,stride=None,T=None,salt=None,**kwargs):
+def md_simple(cmdln_args=None):
     parser = argparse.ArgumentParser("simple implicit solvent relaxation")
     parser.add_argument("-ps",type=int,default=None,help="ps")
     parser.add_argument("-stride",type=int,default=None,help="stride (ps)")
     parser.add_argument("-T",type=float,default=None,help="T (K)")
+    parser.add_argument("-p",type=float,default=None,help="pressure (bar)")
     parser.add_argument("-salt",type=float,default=None,help="salt (M)")
+    parser.add_argument("-cutoff",type=float,default=None,help="cutoff (nm)")
+    parser.add_argument("-init",default=None,help="initial structure (pdb)")
     parser.add_argument("-device",type=int,default=0,help="GPU device")
+    parser.add_argument("-style",type=str,default="amber",choices=["amber","omm","gromacs"],help="GPU device")
     if cmdln_args is None:
         args = parser.parse_args()
     else:
         args = parser.parse_args(cmdln_args)
-    ps,stride,T,salt = args.ps,args.stride,args.T,args.salt
+    ps,stride,T,p,salt = args.ps,args.stride,args.T,args.p,args.salt
+    cutoff,device = args.cutoff,args.device
 
     settings = log.json_load("settings.json")
-    if "implicit_relax" not in settings:
-        implicit_relax = {"ps":1000*500, "stride":100, "T":298.15, "salt":0.1}
+    if "md_settings" not in settings: #default settings
+        md_settings = {"ps":1000*500, 
+                            "stride":100, 
+                            "T":298.15, 
+                            "p":None,
+                            "salt":None, 
+                            "device":0, 
+                            "cutoff":None,
+                            "init":None}
     else:
-        implicit_relax = settings["implicit_relax"]
+        md_settings = settings["md_settings"]
 
+    #handling arguments
     if ps is not None:
-        implicit_relax["ps"] = ps
+        md_settings["ps"] = ps
     if stride is not None:
-        implicit_relax["stride"] = stride
+        md_settings["stride"] = stride
     if T is not None:
-        implicit_relax["T"] = T
+        md_settings["T"] = T
+    if p is not None:
+        md_settings["p"] = p
     if salt is not None:
-        implicit_relax["salt"] = salt
-    
-    cmd = "python " + config.path + "/scripts/md_implicit.py"
+        md_settings["salt"] = salt
+    if cutoff is not None:
+        md_settings["cutoff"] = cutoff
+    if args.init is not None:
+        md_settings["init"] = args.init
+    print(md_settings)
+   
+    #running -- potentially have the *simulation script* document this section...
+    #cmd = "python " + config.path + "/scripts/md_implicit.py"
+    if args.style == "amber":
+        cmd = "python " + config.path + "/scripts/md_amber.py"
+    elif args.style == "omm":
+        cmd = "python " + config.path + "/scripts/md_omm.py"
     cmd += " {}".format(settings["name"])
+    cmd += " -ps {}".format(md_settings["ps"])
+    cmd += " -stride {}".format(md_settings["stride"])
+    cmd += " -T {}".format(md_settings["T"])
     if settings["water"].startswith("igb"):
        cmd += " -solv {}".format( int(settings["water"][3]) )
-    cmd += " -ps {}".format(implicit_relax["ps"])
-    cmd += " -stride {}".format(implicit_relax["stride"])
-    cmd += " -T {}".format(implicit_relax["T"])
-    cmd += " -salt {}".format(implicit_relax["salt"])
-    cmd += " -device {}".format(args.device)
+    if md_settings["p"] not in [None,0.]:
+        cmd += " -p {}".format(md_settings["p"])
+    if md_settings["salt"] not in [None,0.]:
+        cmd += " -salt {}".format(md_settings["salt"])
+    if md_settings["cutoff"] not in [None,0.]:
+        cmd += " -cutoff {}".format(md_settings["cutoff"])
+    if md_settings["init"] not in [None]:
+        cmd += " -init {}".format(md_settings["init"])
+    cmd += " -device {}".format(md_settings["device"])
 
     print("executing: {}".format(cmd))
-    settings["implicit_relax"] = implicit_relax
+    sys.stdout.flush()
+
+    settings["md_settings"] = md_settings
     log.json_write("settings.json",settings)
 
     os.system(cmd)
