@@ -10,4 +10,5 @@ import sys,os
 
 from . import config
 from . import tleap
+from . import analyses
 
